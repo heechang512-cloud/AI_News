@@ -41,7 +41,7 @@ def find_article_image_url(page):
         if og and og.startswith("http"): return og
     except: pass
     return ""
-
+'''
 def fetch_weather(page):
     try:
         page.goto("https://search.naver.com/search.naver?query=날씨", wait_until="networkidle")
@@ -49,6 +49,26 @@ def fetch_weather(page):
         status = page.locator(".before_slash").first.inner_text().strip()
         return {"temp": temp, "status": status}
     except: return {"temp": "N/A", "status": "확인불가"}
+'''
+def fetch_weather(page):
+    try:
+        # 1. 날씨 검색 페이지 접속
+        page.goto("https://search.naver.com/search.naver?query=날씨", wait_until="domcontentloaded")
+        page.wait_for_selector(".temperature_text", timeout=10000) # 온도가 나타날 때까지 대기
+
+        # 2. 온도 추출 (정확하게 숫자 부분만 가져오도록 selector 수정)
+        # .current_temperature 대신 strong 태그 안의 텍스트를 더 세밀하게 잡습니다.
+        temp_raw = page.locator(".temperature_text").first.inner_text()
+        # '현재 온도18.2°' 같은 형태에서 숫자와 도(°)만 남기기
+        temp = temp_raw.replace("현재 온도", "").strip()
+        
+        # 3. 상태(흐림, 맑음 등) 추출
+        status = page.locator(".weather_main").first.inner_text().strip() # .before_slash 대신 더 정확한 클래스 사용
+        
+        return {"temp": temp, "status": status}
+    except Exception as e: 
+        print(f"날씨 수집 에러: {e}")
+        return {"temp": "N/A", "status": "확인불가"}
 
 # =========================
 # 메인 크롤링 (스크린샷 기능 주석 처리)
@@ -67,13 +87,17 @@ def run_crawler():
             print(f"[{idx}/{MAX_ARTICLES}] 처리 중: {e.title[:20]}...")
             try:
                 # domcontentloaded로 설정하여 텍스트 위주로 빠르게 접근
-                page.goto(e.link, timeout=60000, wait_until="domcontentloaded")
-                time.sleep(2)
+                # page.goto(e.link, timeout=60000, wait_until="domcontentloaded")
+                page.goto(e.link, timeout=60000, wait_until="load")
+                time.sleep(3)
                 # [주석 처리] 추후 사용을 위해 스크린샷 로직은 보존하되 실행은 하지 않음
                 # shot_name = f"{extract_article_date(e)}_{extract_press_name(e.link)}_{idx:02d}.png"
                 # shot_path = os.path.join(ASSET_DIR, shot_name)
                 # page.screenshot(path=shot_path, full_page=True)
 
+                page.mouse.wheel(0, 500)
+                time.sleep(1)
+                
                 # 이미지 URL 추출
                 img_url = find_article_image_url(page)
                 
