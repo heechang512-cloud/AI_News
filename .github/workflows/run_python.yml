@@ -22,7 +22,7 @@ jobs:
           pip install requests beautifulsoup4
 
       - name: 뉴스 수집 파이썬 실행
-        run: python google_news_web.py
+        run: python news_report.py
 
       - name: 변경된 index.html 저장하고 올리기
         run: |
