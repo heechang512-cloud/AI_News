@@ -17,8 +17,9 @@ jobs:
           python-version: '3.9'
 
       - name: 라이브러리 설치
-        run: pip install requests beautifulsoup4 feedparser
-
+        run:
+          pip install requests beautifulsoup4 feedparser playwright
+          playwright install --with-deps chromium  # 이게 꼭 있어야 브라우저가 작동합니다!
       - name: 뉴스 수집 실행
         # 아래 파일 이름이 실제 내 파일 이름과 정확히 일치해야 합니다!
         run: python news_report.py 
